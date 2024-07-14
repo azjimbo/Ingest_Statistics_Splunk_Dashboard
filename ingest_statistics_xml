@@ -388,7 +388,7 @@ Clicking here will open the below query in a new tab</a>
 					<latest>$timer.latest$</latest>
 					<sampleRatio>1</sampleRatio>
 				</search>
-				<option name="count">100</option>
+				<option name="count">15</option>
 				<option name="dataOverlayMode">none</option>
 				<option name="drilldown">cell</option>
 				<option name="percentagesRow">false</option>
@@ -418,7 +418,7 @@ Clicking here will open the below query in a new tab</a>
 					<latest>$timer.latest$</latest>
 					<sampleRatio>1</sampleRatio>
 				</search>
-				<option name="count">100</option>
+				<option name="count">15</option>
 				<option name="dataOverlayMode">none</option>
 				<option name="drilldown">none</option>
 				<option name="percentagesRow">false</option>
