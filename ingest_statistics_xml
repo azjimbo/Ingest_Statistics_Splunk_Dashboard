@@ -17,7 +17,7 @@
 	<!-- hidden while thinking about this row
         <search base="ingest_base" id="rollups">
           <query>
-|			 stats dc(orig_sourcetype) as sourcetypes, dc(orig_host) as hosts dc(orig_index) as indexes sum(events) as events
+		| stats dc(orig_sourcetype) as sourcetypes, dc(orig_host) as hosts dc(orig_index) as indexes sum(events) as events
           </query>
         </search>  
 	-->
