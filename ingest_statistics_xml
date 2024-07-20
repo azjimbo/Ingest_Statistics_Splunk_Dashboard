@@ -1,8 +1,9 @@
 <form version="1.1">
-	<label>Ingest Statistics</label>
-	<search id="ingest_base">
-		<query>
+  <label>Ingest Statistics</label>
+  <search id="ingest_base">
+    <query>
 			index=summary sourcetype=ingest_health
+			
 			NOT orig_host IN(sampleHere) NOT orig_sourcetype IN(sampleHere)
 			| table _time orig_host events orig_index orig_sourcetype
 			| eval check_time=(_time), now_time=(now()),time_delta=(now_time-check_time)
@@ -10,64 +11,75 @@
 			| eval dtger=(_time)
 			| where MATCH(orig_index,"$what$") OR MATCH(orig_sourcetype,"$what$") OR MATCH(orig_host,"$what$")
 		</query>
-		<earliest>$timer.earliest$</earliest>
-		<latest>$timer.latest$</latest>
-		<sampleRatio>1</sampleRatio>
-	</search>
-	<!-- hidden while thinking about this row
-        <search base="ingest_base" id="rollups">
-          <query>
-		| stats dc(orig_sourcetype) as sourcetypes, dc(orig_host) as hosts dc(orig_index) as indexes sum(events) as events
-          </query>
-        </search>  
-	-->
-	<fieldset submitButton="false">
-		<input type="radio" token="sample" id="RS2">
-			<label>Compare Sampling</label>
-			<choice value="3600">1 Hour</choice>
-			<choice value="21600">6 Hours</choice>
-			<choice value="86400">1 Day</choice>
-			<default>21600</default>
-		</input>
-		<input type="time" token="timer" searchWhenChanged="true">
-			<label>Compare Sampling To</label>
-			<default>
-				<earliest>-72h@h</earliest>
-				<latest>now</latest>
-			</default>
-		</input>
-		<input type="radio" token="zcth" searchWhenChanged="true" id="radiosample">
-			<!-- horizontal css at the bottom -->
-			<label>Z-Score Threshold</label>
-			<choice value="1">+/- 1</choice>
-			<choice value="2">+/- 2</choice>
-			<default>2</default>
-			<initialValue>2</initialValue>
-		</input>
-		<input type="text" token="what" searchWhenChanged="true">
-			<label>Index/Sourcetype/Host Match</label>
-			<default>\w</default>
-			<initialValue>\w</initialValue>
-		</input>
-		<input type="checkbox" token="reset_tok" searchWhenChanged="true" id="reset">
-			<label>Tokens Reset</label>
-			<choice value="reset">reset</choice>
-			<default>retain</default>
-			<change>
-				<condition value="reset">
-					<set token="what">\w</set>
-					<unset token="host_token"/>
-					<unset token="sourcet_token"/>
-					<unset token="index_token"/>
-					<unset token="form.reset_tok">retain</unset>
-				</condition>
-			</change>
-			<delimiter> </delimiter>
-		</input>
-	</fieldset>
-	<row>
-		<panel>
-			<html>
+
+		<!-- to convert this to a live version.  Substitue the below two lines for the 'index' line above.
+		| tstats latest(_time) as lastIngest count by host sourcetype index _time span=1h
+    		| rename host as orig_host, sourcetype AS orig_sourcetype, index as orig_index, count as events
+		-->
+    <earliest>$timer.earliest$</earliest>
+    <latest>$timer.latest$</latest>
+    <sampleRatio>1</sampleRatio>
+  </search>
+  <fieldset submitButton="false">
+    <input type="radio" token="sample" id="RS2">
+      <label>Compare Sampling</label>
+      <choice value="3600">1 Hour</choice>
+      <choice value="21600">6 Hours</choice>
+      <choice value="86400">1 Day</choice>
+      <default>21600</default>
+    </input>
+    <input type="time" token="timer" searchWhenChanged="true">
+      <label>Compare Sampling To</label>
+      <default>
+        <earliest>-72h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="radio" token="zcth" searchWhenChanged="true" id="radiosample">
+      <!-- horizontal css at the bottom -->
+      <label>Z-Score Threshold</label>
+      <choice value="1">+/- 1</choice>
+      <choice value="2">+/- 2</choice>
+      <default>2</default>
+      <initialValue>2</initialValue>
+    </input>
+    <input type="text" token="what" searchWhenChanged="true">
+      <label>Index/Sourcetype/Host Match</label>
+      <default>\w</default>
+      <initialValue>\w</initialValue>
+    </input>
+    <input type="checkbox" token="posneg" searchWhenChanged="true">
+      <label>Neg and/or Pos Scores</label>
+      <choice value="z_score&lt;0">Negative Scores</choice>
+      <choice value="z_score &gt;= 0">Positive Scores</choice>
+      <default>z_score&lt;0</default>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+      <initialValue>z_scire&lt;0</initialValue>
+      <delimiter> OR </delimiter>
+    </input>
+    <input type="checkbox" token="reset_tok" searchWhenChanged="true" id="reset">
+      <label>Tokens Reset</label>
+      <choice value="reset">reset</choice>
+      <default>retain</default>
+      <change>
+        <condition value="reset">
+          <unset token="form.what">\w</unset>
+          <unset token="host_token"></unset>
+          <unset token="sourcet_token"></unset>
+          <unset token="index_token"></unset>
+          <unset token="form.reset_tok">retain</unset>
+        </condition>
+      </change>
+      <delimiter> </delimiter>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <html>
+        <details>
+          <summary>Info and Instructions</summary>
+          <ul><font color="navy" size="+1">How does the count in the 'Compare Sampling' time range compare to the Average count in the 'Compare Sampling To' time range.  This comparison is expressed as a Z-Score.</font></ul>
 				<details>
 					<summary>Z-Zcore Definition</summary>
 					<font size="+1">
@@ -79,9 +91,9 @@
 		</p>
 		<p>
 		<br/> 
-		For example, one log source (LP ABC-123) generates around 1080 log entries per day, distributed across 5 different sourcetypes and 3 different indexes. If we were to lose 10 of these log entries, it might not be a significant issue, given the volume of logs produced.</p>
+		For example, one log source (Web_ABC-123) generates around 10000 log entries per day, distributed across 5 different sourcetypes and 3 different indexes. If we were to lose 100 of these log entries, it might not be a significant issue, given the volume of logs produced.</p>
 		<p>
-		However, consider another log source (LP ABC-321) that only produces around 20 log entries per day. In this case, missing 18 log entries during a sampling period could represent a relatively larger concern, as it would correspond to a significant percentage of the total logs produced."
+		However, consider another log source (Web_ABC-321) that only produces around 200 log entries per day. In this case, missing 18 log entries during a sampling period could represent a relatively larger concern, as it would correspond to a significant percentage of the total logs produced."
 		</p>
 		<br/>
 		<p>
@@ -103,9 +115,9 @@
 	</font>
 		</details>
 		<details>
-		<details><font size="+1">
 		<summary>Populate the summary index</summary>
-		</font>		<p>
+		<font size="+1"/>
+	<p>
 	</p>
 	<p>
 		Create a scheduled search that collects the statistics once an hour.  This will create a sourcetype in the summary index that is used to run this dashboard.
@@ -140,89 +152,113 @@ Clicking here will open the below query in a new tab</a>
 		After several hours, this should start to provide details.  
 	</p>
 		</details>
+		<details>
+		  <summary>The Filters</summary>
+		  Filters and what they do:<p>
+Sampling Time: This is the time for the most recent events count.  
+</p>
+            <p>
+Compare Sampling To: How far back to comapre the Sampling Time against. 
+</p>
+            <p>
+These are configurable to meet the requirements of an individual data set.  The default settings can be changed in the Dashboard XML to meet local requirements.
+</p>
+            <p>
+Z-Score Threshhold:  Usually, "2" is the generally accepted amount of standard diviation that should raise a concern. The "1" value provides more granularity and a way to validate the process. 
+</p>
+            <p>
+Match: A way to look for a specific value or set of values.  This using a "MATCH" command and the \w is the regex value for any character or number.
+</p><p>
+Negative and/or Positive Scores: Allows to focus the analytic on missing data or spikes in data based on a positive or negative Z-Score.
+</p>
+<p>
+Token Reset: Will revert any drilldowns and Match tokens back to default.
+</p>  
+		</details>
+</details>		
 		</html>
-		</panel>
-	</row>
-	<row>
-		<panel>
-			<title>Sourcetypes Host Count Z-Score +/- $zcth$</title>
-			<single>
-				<search base="host2st">
-					<query>| stats count</query>
-				</search>
-				<option name="colorBy">value</option>
-				<option name="colorMode">block</option>
-				<option name="drilldown">none</option>
-				<option name="numberPrecision">0</option>
-				<option name="rangeColors">["0x53a051" , "0x0877a6", "0xf8be34", "0xf1813F","0xdc4e41"]</option>
-				<option name="rangeValues">[0,4,10,26]</option>
-				<option name="showSparkline">1</option>
-				<option name="showTrendIndicator">1</option>
-				<option name="trellis.enabled">0</option>
-				<option name="trellis.scales.shared">1</option>
-				<option name="trellis.size">medium</option>
-				<option name="trendColorInterpretation">standard</option>
-				<option name="trendDisplayMode">absolute</option>
-				<option name="unitPosition">after</option>
-				<option name="useColors">1</option>
-				<option name="useThousandSeparators">1</option>
-			</single>
-		</panel>
-		<panel>
-			<title>Sourcetypes Events Z-Score +/- $zcth$</title>
-			<single>
-				<search base="STevZS">
-					<query>| stats count</query>
-				</search>
-				<option name="colorBy">value</option>
-				<option name="colorMode">block</option>
-				<option name="drilldown">none</option>
-				<option name="numberPrecision">0</option>
-				<option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813F","0xdc4e41" ]</option>
-				<option name="rangeValues">[0,4,10,20]</option>
-				<option name="showSparkline">1</option>
-				<option name="showTrendIndicator">1</option>
-				<option name="trellis.enabled">0</option>
-				<option name="trellis.scales.shared">1</option>
-				<option name="trellis.size">medium</option>
-				<option name="trendColorInterpretation">standard</option>
-				<option name="trendDisplayMode">absolute</option>
-				<option name="unitPosition">after</option>
-				<option name="useColors">1</option>
-				<option name="useThousandSeparators">1</option>
-			</single>
-		</panel>
-		<panel>
-			<title>Hosts Events Z-Score +/- $zcth$</title>
-			<single>
-				<search base="HsteventZC">
-					<query>| stats count</query>
-				</search>
-				<option name="colorBy">value</option>
-				<option name="colorMode">block</option>
-				<option name="drilldown">none</option>
-				<option name="numberPrecision">0</option>
-				<option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813F", "0xdc4e41"]</option>
-				<option name="rangeValues">[0,4,10,20]</option>
-				<option name="showSparkline">1</option>
-				<option name="showTrendIndicator">1</option>
-				<option name="trellis.enabled">0</option>_<option name="trellis.scales.shared">1</option>
-				<option name="trellis.size">medium</option>
-				<option name="trendColorInterpretation">standard</option>
-				<option name="trendDisplayMode">absolute</option>
-				<option name="unitPosition">after</option>
-				<option name="useColors">1</option>
-				<option name="useThousandSeparators">1</option>
-			</single>
-		</panel>
-	</row>
-	<row>
-		<panel>
-			<title>Z-Score of Host Count by Sourcetype</title>
-			<table>
-				<title>Threshold is set at Z Score = +/- $zcth$</title>
-				<search base="ingest_base" id="host2st">
-					<query>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Sourcetypes Host Count Z-Score +/- $zcth$</title>
+      <single>
+        <search base="host2st">
+          <query>| stats count</query>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051" , "0x0877a6", "0xf8be34", "0xf1813F","0xdc4e41"]</option>
+        <option name="rangeValues">[0,4,10,26]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Sourcetypes Events Z-Score +/- $zcth$</title>
+      <single>
+        <search base="evnts2st">
+          <query>| stats count</query>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813F","0xdc4e41" ]</option>
+        <option name="rangeValues">[0,4,10,20]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Hosts Events Z-Score +/- $zcth$</title>
+      <single>
+        <search base="evts2host">
+          <query>| stats count</query>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813F", "0xdc4e41"]</option>
+        <option name="rangeValues">[0,4,10,20]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>_<option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Z-Score of Host Count by Sourcetype</title>
+      <table>
+        <title>Threshold is set at Z Score = +/- $zcth$</title>
+        <search base="ingest_base" id="host2st">
+          <query>
 						| eventstats dc(orig_host) as count_of_hosts by orig_sourcetype, dtger
 						| stats values(eval(if(prevEvents==1, count_of_hosts,null()))) as recent_hosts_count, 
 						avg(eval(if(prevEvents==6, count_of_hosts, null()))) AS avg_prev_host_count 
@@ -230,27 +266,27 @@ Clicking here will open the below query in a new tab</a>
 						| fillnull value=0 avg_prev_host_count,recent_hosts_count
 						| fillnull value=$zcth$ SD
 						| eval z_score = round((recent_hosts_count -  avg_prev_host_count) / SD, 2)
-						| where z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0
+						| where (z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0) AND $posneg$
 						| eval ideal=0, max=1.0, min=-1.0 , avg_prev_host_count=round(avg_prev_host_count, 2)
 						| table orig_sourcetype, z_score recent_hosts_count avg_prev_host_count
 						| sort + z_score
 					</query>
-				</search>
-				<option name="count">15</option>
-				<option name="dataOverlayMode">none</option>
-				<option name="drilldown">none</option>
-				<option name="percentagesRow">false</option>
-				<option name="rowNumbers">false</option>
-				<option name="totalsRow">false</option>
-				<option name="wrap">true</option>
-			</table>
-		</panel>
-		<panel>
-			<title>Sourcetype Event Count Z-Score</title>
-			<table>
-				<title>Threshold is set at Z Score = +/- $zcth$</title>
-				<search base="ingest_base" id="STevZS">
-					<query> 
+        </search>
+        <option name="count">15</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Sourcetype Event Count Z-Score</title>
+      <table>
+        <title>Threshold is set at Z Score = +/- $zcth$</title>
+        <search base="ingest_base" id="evnts2st">
+          <query> 
 						| eventstats sum(events) as event_cnt by orig_sourcetype, dtger
 						| stats values(eval(if(prevEvents==1,event_cnt,null()))) as recent_events_count, 
 						avg(eval(if(prevEvents==0, event_cnt,null()))) AS avg_previous_events 
@@ -258,26 +294,26 @@ Clicking here will open the below query in a new tab</a>
 						| fillnull value=0 avg_previous_events, recent_events_count
 						| fillnull value=$zcth$ SD
 						| eval z_score = round((recent_events_count - avg_previous_events) / SD, 2)
-						| where z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0
+						| where (z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0) AND $posneg$
 						| eval ideal=0, max=1.0, min=-1.0 , avg_previous_events=round(avg_previous_events,2)
 						| table orig_sourcetype, z_score recent_events_count avg_previous_events
 						| sort + z_score
 					</query>
-				</search>
-				<option name="count">15</option>
-				<option name="dataOverlayMode">none</option>
-				<option name="drilldown">none</option>.<option name="percentagesRow">false</option>
-				<option name="rowNumbers">false</option>
-				<option name="totalsRow">false</option>
-				<option name="wrap">true</option>
-			</table>
-		</panel>
-		<panel>
-			<title>Host Event Count Z-Score</title>
-			<table>
-				<title>Threshold is set at Z Score = +/- $zcth$</title>
-				<search base="ingest_base" id="HsteventZC">
-					<query>
+        </search>
+        <option name="count">15</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>.<option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Host Event Count Z-Score</title>
+      <table>
+        <title>Threshold is set at Z Score = +/- $zcth$</title>
+        <search base="ingest_base" id="evts2host">
+          <query>
 						| eventstats sum(events) as event_cnt by orig_host, dtger
 						| stats values(eval(if(prevEvents==1,event_cnt,null()))) as recent_events_count, 
 						avg(eval(if(prevEvents==0, event_cnt, null()))) AS avg_previous_events 
@@ -285,32 +321,32 @@ Clicking here will open the below query in a new tab</a>
 						| fillnull value=0 avg_previous_events, recent_events_count
 						| fillnull value=2 SD
 						| eval z_score = round((recent_events_count - avg_previous_events) / SD, 2)
-						| where z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0
-						| eval ideal=0, max=2.0, min=-2.0, avg_previous_events=round(avg_previous_events, 2)
+						| where (z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0) AND $posneg$
+						| eval avg_previous_events=round(avg_previous_events, 2)
 						| table orig_host, z_score recent_events_count avg_previous_events
 						| sort + z_score
 					</query>
-				</search>
-				<option name="count">15</option>
-				<option name="dataOverlayMode">none</option>
-				<option name="drilldown">cell</option>
-				<option name="percentagesRow">false</option>
-				<option name="rowNumbers">false</option>
-				<option name="totalsRow">false</option>
-				<option name="wrap">true</option>
-				<drilldown>
-					<set token="host_token">$click.value$</set>
-				</drilldown>
-			</table>
-		</panel>
-	</row>
-	<row>
-		<panel>
-			<title>Sourcetype Count by Index Z-Score</title>
-			<table>
-				<title>Threshold is set at Z Score = +/- $zcth$</title>
-				<search base="ingest_base">
-					<query>
+        </search>
+        <option name="count">15</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <set token="host_token">$click.value$</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Sourcetype Count by Index Z-Score</title>
+      <table>
+        <title>Threshold is set at Z Score = +/- $zcth$</title>
+        <search base="ingest_base" id="idx2st">
+          <query>
 						| eventstats dc(orig_sourcetype) as sourcetype_cnt by orig_index, dtger
 						| stats values(eval(if(prevEvents==1, sourcetype_cnt,null()))) as recent_sourcetype_cnt, 
 						avg(eval(if(prevEvents==0, sourcetype_cnt, null()))) AS avg_previous_sourcetype_cnt,
@@ -319,26 +355,26 @@ Clicking here will open the below query in a new tab</a>
 						| fillnull value=0 avg_previous_sourcetype_cnt, recent_sourcetype_cnt
 						| fillnull value=$zcth$ SD
 						| eval z_score = round((recent_sourcetype_cnt -  avg_previous_sourcetype_cnt) / SD, 2)
-						| where z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0
+						| where (z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0) AND $posneg$
 						| eval ideal=0, max=1.0, min=-1.0 , avg_previous_sourcetype_cnt=round(avg_previous_sourcetype_cnt,2)
 						| table orig_index, z_score recent_sourcetype_cnt , avg_previous_sourcetype_cnt
 						| sort + z_score
 					</query>
-				</search>
-				<option name="count">15</option>
-				<option name="dataOverlayMode">none</option>
-				<option name="drilldown">none</option>
-				<option name="percentagesRow">false</option>
-				<option name="rowNumbers">false</option>
-				<option name="totalsRow">false</option>
-				<option name="wrap">true</option>
-			</table>
-		</panel>
-		<panel>
-			<title>Sourcetype Count by Host (type) Z-Score</title>.<table>
-				<title>Threshold is set at Z Score = +/- $zcth$</title>
-				<search base="ingest_base">
-					<query> 
+        </search>
+        <option name="count">15</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Sourcetype Count by Host (type) Z-Score</title>.<table>
+        <title>Threshold is set at Z Score = +/- $zcth$</title>
+        <search base="ingest_base" id="host2stcnt">
+          <query> 
 						| rex mode=sed field=orig_host "s/\-\w{1,3}?$/-*/g"
 						| eventstats dc(orig_sourcetype) as sourcetype_cnt by orig_host,dtger
 						| stats values(eval(if(prevEvents==1, sourcetype_cnt,null()))) as recent_sourcetype_cnt, 
@@ -347,31 +383,31 @@ Clicking here will open the below query in a new tab</a>
 						| fillnull value=0 avg_previous_sourcetype_cnt, recent_sourcetype_cnt
 						| fillnull value=$zcth$ SD
 						| eval z_score = round((recent_sourcetype_cnt - avg_previous_sourcetype_cnt) / SD, 2)
-						| where z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0
+						| where (z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0) AND $posneg$
 						| eval ideal=0, max=1.0, min=-1.0 , avg_previous_sourcetype_cnt=round(avg_previous_sourcetype_cnt, 2)
 						| table orig_host, z_score recent_sourcetype_cnt avg_previous_sourcetype_cnt
 						| sort + z_score
 					</query>
-				</search>
-				<option name="count">15</option>
-				<option name="dataOverlayMode">none</option>
-				<option name="drilldown">cell</option>
-				<option name="percentagesRow">false</option>
-				<option name="rowNumbers">false</option>
-				<option name="totalsRow">false</option>
-				<option name="wrap">true</option>
-				<drilldown>
-					<set token="host_token">$click.value$</set>
-				</drilldown>
-			</table>
-		</panel>
-	</row>
-	<row depends="$host_token$">
-		<panel>
-			<title>Drilldown from |tstats for $host_token$</title>
-			<table>
-				<search>
-					<query>
+        </search>
+        <option name="count">15</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <set token="host_token">$click.value$</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row depends="$host_token$">
+    <panel>
+      <title>Drilldown from |tstats for $host_token$</title>
+      <table>
+        <search>
+          <query>
 						| tstats latest(_time) as ltime earliest(_time) as etime count as events where host=$host_token$ by host index sourcetype _time
 						| eval nowish=(now())
 						| stats sum(events) as events_ingested, max(ltime) as ltime, values(nowish) as nowish, values(any_L6h) as any_L6h sparkline
@@ -384,54 +420,54 @@ Clicking here will open the below query in a new tab</a>
 						| sort - sec_since_last
 						| table host index sourcetype ltime time_since events_ingested sparkline
 					</query>
-					<earliest>$timer.earliest$</earliest>
-					<latest>$timer.latest$</latest>
-					<sampleRatio>1</sampleRatio>
-				</search>
-				<option name="count">15</option>
-				<option name="dataOverlayMode">none</option>
-				<option name="drilldown">cell</option>
-				<option name="percentagesRow">false</option>
-				<option name="rowNumbers">false</option>
-				<option name="totalsRow">false</option>
-				<option name="wrap">true</option>
-				<drilldown>
-					<set token="index_token">$row.index$</set>
-					<set token="sourcet_token">$row.sourcetype$</set>
-				</drilldown>
-			</table>
-		</panel>
-	</row>
-	<row depends="$sourcet_token$">
-		<panel>
-			<title>Samples of events from Drilldown for $index_token$ $sourcet_token$ $host_token$</title>
-			<table>
-				<search>
-					<query>
+          <earliest>$timer.earliest$</earliest>
+          <latest>$timer.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">15</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <set token="index_token">$row.index$</set>
+          <set token="sourcet_token">$row.sourcetype$</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row depends="$sourcet_token$">
+    <panel>
+      <title>Samples of events from Drilldown for $index_token$ $sourcet_token$ $host_token$</title>
+      <table>
+        <search>
+          <query>
 						index=$index_token$ sourcetype=$sourcet_token$ host=$host_token$
 						| eval mypunct=(_raw)
 						| rex mode=sed field=mypunct "s/[a-z|A-Z|0-9]//g s/ /_/g"
 						| stats first(_raw) as sample1 last(_raw) as sample2 sparkline by host index sourcetype mypunct
 						| fields - mypunct
 					</query>
-					<earliest>$timer.earliest$</earliest>
-					<latest>$timer.latest$</latest>
-					<sampleRatio>1</sampleRatio>
-				</search>
-				<option name="count">15</option>
-				<option name="dataOverlayMode">none</option>
-				<option name="drilldown">none</option>
-				<option name="percentagesRow">false</option>
-				<option name="refresh.display">progressbar</option>
-				<option name="rowNumbers">false</option>
-				<option name="totalsRow">false</option>
-				<option name="wrap">true</option>
-			</table>
-		</panel>
-	</row>
-	<row depends="$nevershowCSS$">
-		<panel>
-			<html>"CSS Below" 
+          <earliest>$timer.earliest$</earliest>
+          <latest>$timer.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">15</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row depends="$nevershowCSS$">
+    <panel>
+      <html>"CSS Below" 
 			  <style>
 				  :is(#radiosample,#RS2) div[data-test="radio-list" ]{
 				  display: inline;
@@ -451,108 +487,108 @@ Clicking here will open the below query in a new tab</a>
 				  }
 			  </style>
 			</html>
-		</panel>
-	</row>
-	<row depends="$hidemefornow$">
-		<panel>
-			<single>
-				<search base="rollups">
-					<query>
+    </panel>
+  </row>
+  <row depends="$hidemefornow$">
+    <panel>
+      <single>
+        <search base="rollups">
+          <query>
 						| table indexes
 					</query>
-				</search>
-				<option name="colorBy">value</option>
-				<option name="colorMode">block</option>
-				<option name="drilldown">none</option>
-				<option name="numberPrecision">0</option>
-				<option name="rangeColors">["0x53a051","0x1182f3"]</option>
-				<option name="rangeValues">[0]</option>
-				<option name="showSparkline">1</option>
-				<option name="showTrendIndicator">1</option>
-				<option name="trellis.enabled">0</option>
-				<option name="trellis.scales.shared">1</option>
-				<option name="trellis.size">medium</option>
-				<option name="trendColorInterpretation">standard</option>
-				<option name="trendDisplayMode">absolute</option>
-				<option name="unitPosition">after</option>
-				<option name="useColors">1</option>
-				<option name="useThousandSeparators">0</option>
-			</single>
-		</panel>
-		<panel>
-			<single>
-				<search base="rollups">
-					<query>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x1182f3"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">0</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <search base="rollups">
+          <query>
 						| table sourcetypes
 					</query>
-				</search>
-				<option name="colorBy">value</option>
-				<option name="colorMode">block</option>
-				<option name="drilldown">none</option>
-				<option name="numberPrecision">0</option>
-				<option name="rangeColors">["0x53a051","0x1182f3"]</option>
-				<option name="rangeValues">[0]</option>
-				<option name="showSparkline">1</option>
-				<option name="showTrendIndicator">1</option>
-				<option name="trellis.enabled">0</option>
-				<option name="trellis.scales.shared">1</option>
-				<option name="trellis.size">medium</option>
-				<option name="trendColorInterpretation">standard</option>
-				<option name="trendDisplayMode">absolute</option>
-				<option name="unitPosition">after</option>
-				<option name="useColors">1</option>
-				<option name="useThousandSeparators">0</option>
-			</single>
-		</panel>
-		<panel>
-			<single>
-				<search base="rollups">
-					<query>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x1182f3"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">0</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <search base="rollups">
+          <query>
 						| table hosts
 					</query>
-				</search>
-				<option name="colorBy">value</option>
-				<option name="colorMode">block</option>
-				<option name="drilldown">none</option>
-				<option name="numberPrecision">0</option>
-				<option name="rangeColors">["0x53a051","0x1182f3"]</option>
-				<option name="rangeValues">[0]</option>
-				<option name="showSparkline">1</option>
-				<option name="showTrendIndicator">1</option>
-				<option name="trellis.enabled">0</option>
-				<option name="trellis.scales.shared">1</option>
-				<option name="trellis.size">medium</option>
-				<option name="trendColorInterpretation">standard</option>
-				<option name="trendDisplayMode">absolute</option>
-				<option name="unitPosition">after</option>
-				<option name="useColors">1</option>
-				<option name="useThousandSeparators">0</option>
-			</single>
-		</panel>
-		<panel>
-			<single>
-				<search base="rollups">
-					<query>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x1182f3"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">0</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <search base="rollups">
+          <query>
 						| table events
 					</query>
-				</search>
-				<option name="colorBy">value</option>
-				<option name="colorMode">block</option>
-				<option name="drilldown">none</option>
-				<option name="numberPrecision">0</option>
-				<option name="rangeColors">["0x53a051","0x1182f3"]</option>
-				<option name="rangeValues">[0]</option>
-				<option name="showSparkline">1</option>
-				<option name="showTrendIndicator">1</option>
-				<option name="trellis.enabled">0</option>
-				<option name="trellis.scales.shared">1</option>
-				<option name="trellis.size">medium</option>
-				<option name="trendColorInterpretation">standard</option>
-				<option name="trendDisplayMode">absolute</option>
-				<option name="unitPosition">after</option>
-				<option name="useColors">1</option>
-				<option name="useThousandSeparators">0</option>
-			</single>
-		</panel>
-	</row>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x1182f3"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">0</option>
+      </single>
+    </panel>
+  </row>
 </form>
