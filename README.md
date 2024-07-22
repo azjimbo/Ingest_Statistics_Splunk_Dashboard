@@ -2,7 +2,7 @@ Finding missing data (or other ingest anomolies) based on Z Score*.
 
 There are two versions of this dashboard.   The first uses a scheduled search that populates a summary index. The scheduled search that populates the index is in the instructions in the dashboard.  The other one uses a |tstats query ( the _live version) and might not be suitable for larger environments.
 
-These Splunk Dashboards use data gathered in one hour samplings, then runs an algorithm to present when a Z Score exceeds a configurable setting.
+These Splunk Dashboards use data gathered in one hour samplings, then run an algorithm to present when a Z Score exceeds a configurable setting.
 
 This dashhoard will present Z Scores for:
 - The number of Hosts in each Sourcetype
