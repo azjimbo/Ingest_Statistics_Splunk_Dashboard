@@ -13,10 +13,11 @@ This dashhoard will present Z Scores for:
 
 Based on the data collected, this dashboard calculates the Z Score for each of those.  This provides a way to identifiy when a particular host, sourcetype or index deviates from its normal metric.  
 
-Use:
--Create a new dashboard using the xml code provided.
--Open the "Details" (click on the line) and click the query link.  This will open a query in a new tab and run it.  Once you're comfortable with what you see, remove the comments from the entire "|collect" stanza at the bottom and save as a scheduled search (preferably once an hour).  This will collect the data into a Summary Index.
--This shoukd start to show results on the dashboard in a few hours.  
+How to Use:
+- Create a new dashboard using the xml code provided.
+- For the "live" version you can now see Z Scores.  Adjust the 'Compare' time ranges and review the results.
+- For the version that uses the Saved Search and Summary Index, Open the "Details" (click on the line) and click the query link.  This will open a query in a new tab and run it.  Once you're comfortable with what you see, remove the comments from the entire "|collect" stanza at the bottom and save as a scheduled search (preferably once an hour).  This will collect the data into a Summary Index.
+- This shoukd start to show results on the dashboard in a few hours.  
 
 This process also provides historic data about hosts, sourcetyoes and indexes in your Splunk instance (through standard Splunk Query Language).
 
