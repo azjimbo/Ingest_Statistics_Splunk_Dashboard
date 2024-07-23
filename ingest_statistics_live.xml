@@ -2,23 +2,21 @@
   <label>Ingest Statistics Live</label>
   <search id="ingest_base">
     <query>
-		  | tstats latest(_time) as lastIngest count by host sourcetype index _time span=1h
-      | rename host as orig_host, sourcetype AS orig_sourcetype, index as orig_index, count as events
-      
-      
-      | search   NOT orig_host IN(sampleHere) NOT orig_sourcetype IN(sampleHere)
-			| table _time orig_host events orig_index orig_sourcetype
-			| eval check_time=(_time), now_time=(now()),time_delta=(now_time-check_time)
-			| eval prevEvents=if(time_delta&lt;$sample$,1, 0)
-			| eval dtger=(_time)
-			| where MATCH(orig_index,"$what$") OR MATCH(orig_sourcetype,"$what$") OR MATCH(orig_host,"$what$")
-		</query>
+	| tstats latest(_time) as lastIngest count by host sourcetype index _time span=1h
+	| rename host as orig_host, sourcetype AS orig_sourcetype, index as orig_index, count as events
+      	| search   NOT orig_host IN(sampleHere) NOT orig_sourcetype IN(sampleHere)
+	| table _time orig_host events orig_index orig_sourcetype
+	| eval check_time=(_time), now_time=(now()),time_delta=(now_time-check_time)
+	| eval prevEvents=if(time_delta&lt;$sample$,1, 0)
+	| eval dtger=(_time)
+	| where MATCH(orig_index,"$what$") OR MATCH(orig_sourcetype,"$what$") OR MATCH(orig_host,"$what$")
+    </query>
     
     <!-- this line is used if you want to convert to a summary index based version.
     
 			index=summary sourcetype=ingest_health
 		
-		-->
+    -->
     <earliest>$timer.earliest$</earliest>
     <latest>$timer.latest$</latest>
     <sampleRatio>1</sampleRatio>
