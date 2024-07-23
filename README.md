@@ -19,7 +19,7 @@ How to Use:
 - For the version that uses the Saved Search and Summary Index, Open the "Details" (click on the line) and click the query link.  This will open a query in a new tab and run it.  Once you're comfortable with what you see, remove the comments from the entire "|collect" stanza at the bottom and save as a scheduled search (preferably once an hour).  This will collect the data into a Summary Index.
 - This shoukd start to show results on the dashboard in a few hours.  
 
-This process also provides historic data about hosts, sourcetyoes and indexes in your Splunk instance (through standard Splunk Query Language).
+The Summary Index version also provides historic data about hosts, sourcetypes and indexes in your Splunk instance (through standard Splunk Query Language).
 
 
 *A z-score, also known as a standard score, indicates how many standard deviations a data point is from the mean (average) of a data set.
