@@ -267,7 +267,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
 						| fillnull value=$zcth$ SD
 						| eval z_score = round((recent_hosts_count -  avg_prev_host_count) / SD, 2)
 						| where (z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0) AND $posneg$
-						| eval ideal=0, max=1.0, min=-1.0 , avg_prev_host_count=round(avg_prev_host_count, 2)
+						| eval avg_prev_host_count=round(avg_prev_host_count, 2)
 						| table orig_sourcetype, z_score recent_hosts_count avg_prev_host_count
 						| sort + z_score
 					</query>
@@ -295,7 +295,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
 						| fillnull value=$zcth$ SD
 						| eval z_score = round((recent_events_count - avg_previous_events) / SD, 2)
 						| where (z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0) AND $posneg$
-						| eval ideal=0, max=1.0, min=-1.0 , avg_previous_events=round(avg_previous_events,2)
+						| eval avg_previous_events=round(avg_previous_events,2)
 						| table orig_sourcetype, z_score recent_events_count avg_previous_events
 						| sort + z_score
 					</query>
@@ -356,7 +356,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
 						| fillnull value=$zcth$ SD
 						| eval z_score = round((recent_sourcetype_cnt -  avg_previous_sourcetype_cnt) / SD, 2)
 						| where (z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0) AND $posneg$
-						| eval ideal=0, max=1.0, min=-1.0 , avg_previous_sourcetype_cnt=round(avg_previous_sourcetype_cnt,2)
+						| eval avg_previous_sourcetype_cnt=round(avg_previous_sourcetype_cnt,2)
 						| table orig_index, z_score recent_sourcetype_cnt , avg_previous_sourcetype_cnt
 						| sort + z_score
 					</query>
@@ -384,7 +384,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
 						| fillnull value=$zcth$ SD
 						| eval z_score = round((recent_sourcetype_cnt - avg_previous_sourcetype_cnt) / SD, 2)
 						| where (z_score &gt;= $zcth$.0 OR z_score &lt;= -$zcth$.0) AND $posneg$
-						| eval ideal=0, max=1.0, min=-1.0 , avg_previous_sourcetype_cnt=round(avg_previous_sourcetype_cnt, 2)
+						| eval avg_previous_sourcetype_cnt=round(avg_previous_sourcetype_cnt, 2)
 						| table orig_host, z_score recent_sourcetype_cnt avg_previous_sourcetype_cnt
 						| sort + z_score
 					</query>
