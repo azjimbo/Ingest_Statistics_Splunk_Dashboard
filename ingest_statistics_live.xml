@@ -268,7 +268,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
           <query>
 						| eventstats dc(orig_host) as count_of_hosts by orig_sourcetype, dtger
 						| stats values(eval(if(prevEvents==1, count_of_hosts,null()))) as recent_hosts_count, 
-						avg(eval(if(prevEvents==6, count_of_hosts, null()))) AS avg_prev_host_count 
+						avg(eval(if(prevEvents==0, count_of_hosts, null()))) AS avg_prev_host_count 
 						stdev(eval(if(prevEvents==0, count_of_hosts, null()))) as SD by orig_sourcetype
 						| fillnull value=0 avg_prev_host_count,recent_hosts_count
 						| fillnull value=$zcth$ SD
