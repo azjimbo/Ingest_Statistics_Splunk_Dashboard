@@ -260,7 +260,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
         <search base="ingest_base" id="host2st">
           <query>
 						| eventstats dc(orig_host) as count_of_hosts by orig_sourcetype, dtger
-						| stats values(eval(if(prevEvents==1, count_of_hosts,null()))) as recent_hosts_count, 
+						| stats latest(eval(if(prevEvents==1, count_of_hosts,null()))) as recent_hosts_count, 
 						avg(eval(if(prevEvents==0, count_of_hosts, null()))) AS avg_prev_host_count 
 						stdev(eval(if(prevEvents==0, count_of_hosts, null()))) as SD by orig_sourcetype
 						| fillnull value=0 avg_prev_host_count,recent_hosts_count
@@ -288,7 +288,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
         <search base="ingest_base" id="evnts2st">
           <query> 
 						| eventstats sum(events) as event_cnt by orig_sourcetype, dtger
-						| stats values(eval(if(prevEvents==1,event_cnt,null()))) as recent_events_count, 
+						| stats latest(eval(if(prevEvents==1,event_cnt,null()))) as recent_events_count, 
 						avg(eval(if(prevEvents==0, event_cnt,null()))) AS avg_previous_events 
 						stdev(eval(if(prevEvents==0,event_cnt, null()))) as SD by orig_sourcetype
 						| fillnull value=0 avg_previous_events, recent_events_count
@@ -315,7 +315,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
         <search base="ingest_base" id="evts2host">
           <query>
 						| eventstats sum(events) as event_cnt by orig_host, dtger
-						| stats values(eval(if(prevEvents==1,event_cnt,null()))) as recent_events_count, 
+						| stats latest(eval(if(prevEvents==1,event_cnt,null()))) as recent_events_count, 
 						avg(eval(if(prevEvents==0, event_cnt, null()))) AS avg_previous_events 
 						stdev(eval(if(prevevents=0,event_cnt, null()))) as SD by orig_host
 						| fillnull value=0 avg_previous_events, recent_events_count
@@ -348,7 +348,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
         <search base="ingest_base" id="idx2st">
           <query>
 						| eventstats dc(orig_sourcetype) as sourcetype_cnt by orig_index, dtger
-						| stats values(eval(if(prevEvents==1, sourcetype_cnt,null()))) as recent_sourcetype_cnt, 
+						| stats latest(eval(if(prevEvents==1, sourcetype_cnt,null()))) as recent_sourcetype_cnt, 
 						avg(eval(if(prevEvents==0, sourcetype_cnt, null()))) AS avg_previous_sourcetype_cnt,
 						stdev(eval(if(prevEvents==0, sourcetype_cnt, null()))) as SD 
 						by orig_index
@@ -377,7 +377,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
           <query> 
 						| rex mode=sed field=orig_host "s/\-\w{1,3}?$/-*/g"
 						| eventstats dc(orig_sourcetype) as sourcetype_cnt by orig_host,dtger
-						| stats values(eval(if(prevEvents==1, sourcetype_cnt,null()))) as recent_sourcetype_cnt, 
+						| stats latest(eval(if(prevEvents==1, sourcetype_cnt,null()))) as recent_sourcetype_cnt, 
 						avg(eval(if(prevEvents==0, sourcetype_cnt, null()))) AS avg_previous_sourcetype_cnt
 						stdev(eval(if(prevEvents==0, sourcetype_cnt, null()))) as SD by orig_host
 						| fillnull value=0 avg_previous_sourcetype_cnt, recent_sourcetype_cnt
