@@ -322,7 +322,7 @@ Token Reset: Will revert any drilldowns and Match tokens back to default.
 						| eventstats sum(events) as event_cnt by orig_host, dtger
 						| stats latest(eval(if(prevEvents==1,event_cnt,null()))) as recent_events_count, 
 						avg(eval(if(prevEvents==0, event_cnt, null()))) AS avg_previous_events 
-						stdev(eval(if(prevevents=0,event_cnt, null()))) as SD by orig_host
+						stdev(eval(if(prevEvents=0,event_cnt, null()))) as SD by orig_host
 						| fillnull value=0 avg_previous_events, recent_events_count
 						| fillnull value=2 SD
 						| eval z_score = round((recent_events_count - avg_previous_events) / SD, 2)
